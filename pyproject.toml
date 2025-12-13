@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "notes"
+version = "0.1.0"
+description = "A platform for managing notes with multiple backend providers"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "click>=8.0",
+    "python-dotenv>=1.0",
+    "httpx>=0.24",
+    "mcp[cli]>=1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+]
+google = [
+    "gworkspace-access",
+]
+
+[project.scripts]
+notes = "notes.cli.__main__:main"
+notes-mcp = "notes.mcp.server:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["notes*"]
