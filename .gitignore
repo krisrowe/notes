@@ -46,3 +46,4 @@ htmlcov/
 
 # Local data (if using JSON provider locally)
 *.local.json
+TODO.md

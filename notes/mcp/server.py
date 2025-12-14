@@ -109,6 +109,24 @@ def add_note(
     return provider.add(title=title, content=content, labels=labels)
 
 
+@mcp.tool()
+def list_attachments(note_id: str) -> list[dict]:
+    """List attachments for a note.
+
+    Args:
+        note_id: The note ID to get attachments for (from list_notes results)
+
+    Returns:
+        List of attachment objects with:
+          - ID: attachment ID
+          - Type: "Image" or "Link"
+          - Image: file path like "Attachment_Images/filename.jpg" (for images)
+          - Link: JSON string with Url and LinkText (for links)
+    """
+    provider = get_provider()
+    return provider.list_attachments(note_id=note_id)
+
+
 def main():
     """Run the MCP server."""
     mcp.run()

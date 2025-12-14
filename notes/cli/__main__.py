@@ -162,9 +162,56 @@ def add_cmd(title, content, label, output_format):
         sys.exit(1)
 
 
+# Attachments command group
+@click.group()
+def attachments():
+    """Manage note attachments."""
+    pass
+
+
+@attachments.command("list")
+@click.argument('note_id')
+@click.option('--format', 'output_format', type=click.Choice(['json', 'text']), default='text',
+              help='Output format.')
+def attachments_list(note_id, output_format):
+    """List attachments for a note.
+
+    \b
+    Examples:
+      notes attachments list f15775cf
+      notes attachments list f15775cf --format json
+    """
+    try:
+        provider = get_provider()
+        attachment_list = provider.list_attachments(note_id=note_id)
+
+        if output_format == 'json':
+            click.echo(json.dumps(attachment_list, indent=2, default=str))
+        else:
+            if not attachment_list:
+                click.echo("No attachments found.")
+            else:
+                click.echo(f"Found {len(attachment_list)} attachments:")
+                for att in attachment_list:
+                    att_type = att.get('Type', '?')
+                    if att_type == 'Image':
+                        path = att.get('Image') or att.get('List Image', '(no path)')
+                        click.echo(f"  [{att.get('ID', '?')}] Image: {path}")
+                    elif att_type == 'Link':
+                        link_json = att.get('Link', '{}')
+                        click.echo(f"  [{att.get('ID', '?')}] Link: {link_json}")
+                    else:
+                        click.echo(f"  [{att.get('ID', '?')}] {att_type}")
+
+    except Exception as e:
+        click.secho(f"Error: {e}", fg='red', err=True)
+        sys.exit(1)
+
+
 notes.add_command(config)
 notes.add_command(list_cmd, name='list')
 notes.add_command(add_cmd, name='add')
+notes.add_command(attachments)
 
 
 def main():

@@ -1,5 +1,7 @@
 """AppSheet API provider implementation."""
 
+from __future__ import annotations
+
 import os
 from typing import Optional
 
@@ -188,6 +190,37 @@ class AppSheetProvider:
         if result.get("Rows"):
             return result["Rows"][0]
         return result
+
+    def list_attachments(self, note_id: str, attachment_table: str = "Attachment") -> list[dict]:
+        """List attachments for a note.
+
+        Args:
+            note_id: The note ID to get attachments for
+            attachment_table: Name of the attachment table (default "Attachment")
+
+        Returns:
+            List of attachment dicts with ID, Type, Image (path), Link (JSON)
+        """
+        payload = {
+            "Action": "Find",
+            "Properties": {
+                "Locale": "en-US",
+                "Selector": f'Filter({attachment_table}, [Note] = "{note_id}")',
+            },
+            "Rows": [],
+        }
+
+        response = httpx.post(
+            self._get_url(table=attachment_table),
+            headers=self._get_headers(),
+            json=payload,
+            timeout=30.0,
+        )
+
+        if response.status_code != 200:
+            raise Exception(f"AppSheet API error: {response.status_code} - {response.text}")
+
+        return response.json() if response.text else []
 
     @classmethod
     def validate_config(cls, config: dict) -> tuple[bool, str, dict]:

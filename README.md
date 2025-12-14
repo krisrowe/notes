@@ -115,8 +115,12 @@ The AppSheet API supports referencing image files by path (e.g., `Attachment_Ima
 
 This would enable round-trip image attachment support without base64 encoding through the AppSheet API.
 
+### File Existence Validation
+
+When creating attachments via SDK/CLI/MCP with a filename reference, we should validate that the file exists in Google Drive before creating the attachment record. This prevents orphaned attachment records pointing to non-existent files.
+
 ### Other Planned Features
 
-- Attachment listing (metadata and links)
-- Note deletion and updates
+- Note read, update, and delete operations
 - Additional providers (Google Sheets, local JSON, GCS bucket)
+- Formal provider interface/abstract class with Pydantic data models
