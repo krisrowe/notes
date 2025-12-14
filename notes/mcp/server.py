@@ -110,6 +110,52 @@ def add_note(
 
 
 @mcp.tool()
+def read_note(note_id: str) -> dict:
+    """Read a single note by ID.
+
+    Args:
+        note_id: The note ID to retrieve (from list_notes results)
+
+    Returns:
+        Note object with ID, Title, Content, Labels, Created, Modified, etc.
+        Returns {"error": "Note not found"} if the note doesn't exist.
+    """
+    provider = get_provider()
+    note = provider.get(note_id=note_id)
+    if note is None:
+        return {"error": "Note not found", "note_id": note_id}
+    return note
+
+
+@mcp.tool()
+def update_note(
+    note_id: str,
+    title: str | None = None,
+    content: str | None = None,
+    labels: str | None = None,
+) -> dict:
+    """Update an existing note.
+
+    Only specified fields are updated; others remain unchanged.
+
+    Args:
+        note_id: The note ID to update (required)
+        title: New title (optional)
+        content: New content/body (optional)
+        labels: New labels as comma-separated string (optional).
+                Examples: "Work", "Work,Todo", "Personal,Important"
+
+    Returns:
+        Updated note object with ID, Title, Content, Labels, Modified, etc.
+    """
+    if title is None and content is None and labels is None:
+        return {"error": "At least one of title, content, or labels must be provided"}
+
+    provider = get_provider()
+    return provider.update(note_id=note_id, title=title, content=content, labels=labels)
+
+
+@mcp.tool()
 def list_attachments(note_id: str) -> list[dict]:
     """List attachments for a note.
 

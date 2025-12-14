@@ -191,6 +191,90 @@ class AppSheetProvider:
             return result["Rows"][0]
         return result
 
+    def get(self, note_id: str) -> dict | None:
+        """Get a single note by ID. Standard provider interface.
+
+        Args:
+            note_id: The note ID to retrieve
+
+        Returns:
+            Note dict if found, None if not found
+        """
+        payload = {
+            "Action": "Find",
+            "Properties": {
+                "Locale": "en-US",
+                "Selector": f'Filter({self.table_name}, [ID] = "{note_id}")',
+            },
+            "Rows": [],
+        }
+
+        response = httpx.post(
+            self._get_url(),
+            headers=self._get_headers(),
+            json=payload,
+            timeout=30.0,
+        )
+
+        if response.status_code != 200:
+            raise Exception(f"AppSheet API error: {response.status_code} - {response.text}")
+
+        rows = response.json() if response.text else []
+        return rows[0] if rows else None
+
+    def update(
+        self,
+        note_id: str,
+        title: str | None = None,
+        content: str | None = None,
+        labels: str | None = None,
+        **kwargs,
+    ) -> dict:
+        """Update a note. Standard provider interface.
+
+        Args:
+            note_id: The note ID to update (required)
+            title: New title (optional)
+            content: New content (optional)
+            labels: New labels (optional)
+            **kwargs: Additional fields to update
+
+        Returns:
+            Updated note dict
+        """
+        # Build row with only provided fields
+        row = {"ID": note_id}
+        if title is not None:
+            row["Title"] = title
+        if content is not None:
+            row["Content"] = content
+        if labels is not None:
+            row["Labels"] = labels
+        row.update(kwargs)
+
+        payload = {
+            "Action": "Edit",
+            "Properties": {
+                "Locale": "en-US",
+            },
+            "Rows": [row],
+        }
+
+        response = httpx.post(
+            self._get_url(),
+            headers=self._get_headers(),
+            json=payload,
+            timeout=30.0,
+        )
+
+        if response.status_code != 200:
+            raise Exception(f"AppSheet API error: {response.status_code} - {response.text}")
+
+        result = response.json()
+        if result.get("Rows"):
+            return result["Rows"][0]
+        return result
+
     def list_attachments(self, note_id: str, attachment_table: str = "Attachment") -> list[dict]:
         """List attachments for a note.
 

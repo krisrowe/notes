@@ -162,6 +162,79 @@ def add_cmd(title, content, label, output_format):
         sys.exit(1)
 
 
+@click.command()
+@click.argument('note_id')
+@click.option('--format', 'output_format', type=click.Choice(['json', 'text']), default='text',
+              help='Output format.')
+def read_cmd(note_id, output_format):
+    """Read a note by ID.
+
+    \b
+    Examples:
+      notes read f15775cf
+      notes read f15775cf --format json
+    """
+    try:
+        provider = get_provider()
+        note = provider.get(note_id=note_id)
+
+        if note is None:
+            click.secho(f"Note not found: {note_id}", fg='yellow', err=True)
+            sys.exit(1)
+
+        if output_format == 'json':
+            click.echo(json.dumps(note, indent=2, default=str))
+        else:
+            title = note.get('Title') or note.get('title') or '(no title)'
+            content = note.get('Content') or note.get('content') or ''
+            labels = note.get('Labels') or note.get('labels') or ''
+            click.echo(f"[{note_id}] {title}")
+            if labels:
+                click.echo(f"Labels: {labels}")
+            if content:
+                click.echo(f"\n{content}")
+
+    except Exception as e:
+        click.secho(f"Error: {e}", fg='red', err=True)
+        sys.exit(1)
+
+
+@click.command()
+@click.argument('note_id')
+@click.option('--title', '-t', default=None, help='New title.')
+@click.option('--content', '-c', default=None, help='New content/body.')
+@click.option('--label', '-l', default=None, help='New labels (comma-separated).')
+@click.option('--format', 'output_format', type=click.Choice(['json', 'text']), default='text',
+              help='Output format.')
+def update_cmd(note_id, title, content, label, output_format):
+    """Update an existing note.
+
+    \b
+    Examples:
+      notes update f15775cf -t "New title"
+      notes update f15775cf -c "Updated content"
+      notes update f15775cf -l "Work,Important"
+      notes update f15775cf -t "New title" -c "New content"
+    """
+    if title is None and content is None and label is None:
+        click.secho("Error: At least one of --title, --content, or --label required.", fg='red', err=True)
+        sys.exit(1)
+
+    try:
+        provider = get_provider()
+        note = provider.update(note_id=note_id, title=title, content=content, labels=label)
+
+        if output_format == 'json':
+            click.echo(json.dumps(note, indent=2, default=str))
+        else:
+            updated_title = note.get('Title') or note.get('title') or '(no title)'
+            click.secho(f"Updated note [{note_id}]: {updated_title}", fg='green')
+
+    except Exception as e:
+        click.secho(f"Error: {e}", fg='red', err=True)
+        sys.exit(1)
+
+
 # Attachments command group
 @click.group()
 def attachments():
@@ -210,7 +283,9 @@ def attachments_list(note_id, output_format):
 
 notes.add_command(config)
 notes.add_command(list_cmd, name='list')
+notes.add_command(read_cmd, name='read')
 notes.add_command(add_cmd, name='add')
+notes.add_command(update_cmd, name='update')
 notes.add_command(attachments)
 
 
