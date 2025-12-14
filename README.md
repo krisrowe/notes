@@ -1,48 +1,94 @@
 # Notes
 
-A platform for managing notes with multiple backend providers.
+CLI and MCP Server for managing notes across multiple backends. Integrates with Claude Code, Gemini CLI, and other MCP-compatible clients.
+
+## Quick Start
+
+```bash
+# Install
+pipx install git+https://github.com/krisrowe/notes.git
+
+# Configure your provider (see Provider Setup below)
+notes config import my-config.json
+
+# Configure MCP for Claude Code
+claude mcp add --scope user notes -- notes-mcp
+
+# Configure MCP for Gemini CLI
+gemini mcp add notes --command notes-mcp --scope user
+```
+
+## Features
+
+- **CLI Tool (`notes`)** - List, add, and search notes from the command line
+- **MCP Server (`notes-mcp`)** - Note management for LLM clients
+- **Gmail-style Query Syntax** - Search with `label:work`, `-label:archived`, `OR`, etc.
+- **Multiple Providers** - AppSheet (now), Google Sheets and local JSON (planned)
+- **Central Config** - Settings stored in `~/.config/notes/config.json`
+
+## Prerequisites
+
+- **Python 3.10+**
+- **pipx** - For isolated installation ([install pipx](https://pipx.pypa.io/stable/installation/))
+- **A configured provider** - See Provider Setup below
 
 ## Installation
 
-```bash
-pip install -e .
-```
-
-## Configuration
-
-Notes uses a central JSON config file stored at `~/.config/notes/config.json`.
-
-### Setup with AppSheet Provider
-
-1. Create a config file (e.g., `my-config.json`):
-
-```json
-{
-  "provider": "appsheet",
-  "appsheet": {
-    "app_id": "YOUR_APP_ID",
-    "api_key": "YOUR_API_KEY",
-    "note_table": "Note",
-    "attachment_table": "Attachment"
-  }
-}
-```
-
-2. Import and validate the config:
+### Install via pipx (Recommended)
 
 ```bash
-notes config import my-config.json
+pipx install git+https://github.com/krisrowe/notes.git
 ```
 
-This validates the config and tests the connection before saving. If validation fails, your existing config remains unchanged.
+This installs both the `notes` CLI and `notes-mcp` server commands.
 
-3. Verify the config:
+### Upgrade
+
+```bash
+pipx upgrade notes
+```
+
+### Uninstall
+
+```bash
+pipx uninstall notes
+```
+
+## Provider Setup
+
+Notes requires a backend provider. Choose one and follow its setup guide:
+
+| Provider | Status | Setup Guide |
+|----------|--------|-------------|
+| **AppSheet** | Available | [docs/APPSHEET.md](./docs/APPSHEET.md) |
+| **Google Sheets** | Planned | - |
+| **Local JSON** | Planned | - |
+
+After configuring your provider, verify the setup:
 
 ```bash
 notes config show
 ```
 
-## Usage
+## MCP Client Configuration
+
+### Claude Code
+
+```bash
+claude mcp add --scope user notes -- notes-mcp
+```
+
+For detailed options, see [docs/CLAUDE-CODE.md](./docs/CLAUDE-CODE.md).
+
+### Gemini CLI
+
+```bash
+gemini mcp add notes --command notes-mcp --scope user
+```
+
+For detailed options, see [docs/GEMINI-CLI.md](./docs/GEMINI-CLI.md).
+
+## CLI Usage
 
 ### List and search notes
 
@@ -79,48 +125,59 @@ notes add "Shopping list" -c "Milk, eggs, bread"
 notes add "Work task" -l "Work,Todo"
 ```
 
-## MCP Server
-
-Run the MCP server for integration with Claude Code or other MCP clients:
+### List attachments
 
 ```bash
-notes-mcp
+notes attachments list <note-id>
+notes attachments list <note-id> --format json
 ```
 
-Available tools:
-- `list_notes(query, limit, sort)` - Search and list notes
-- `add_note(title, content, labels)` - Create a note
-- `show_config()` - Show config (API keys hidden)
+## CLI Reference
 
-## Providers
+| Command | Description |
+|---------|-------------|
+| `notes list [query]` | List and search notes |
+| `notes add <title>` | Create a new note |
+| `notes attachments list <id>` | List attachments for a note |
+| `notes config show` | Show current configuration |
+| `notes config import <file>` | Import configuration from JSON |
+| `notes --version` | Show version |
+| `notes --help` | Show help |
 
-- **appsheet**: Connects to an AppSheet app via REST API
-- **json**: (planned) Local JSON file storage
-- **sheets**: (planned) Google Sheets backend via gwsa
+## MCP Server Tools
+
+The MCP server exposes these tools for LLM clients:
+
+| Tool | Description |
+|------|-------------|
+| `list_notes` | Search and list notes with Gmail-style query |
+| `add_note` | Create a new note with title, content, labels |
+| `list_attachments` | List attachments for a note |
+| `show_config` | Show config (API keys hidden) |
+
+For detailed tool documentation, see [docs/TOOLS.md](./docs/TOOLS.md).
+
+## Configuration Files
+
+```
+~/.config/notes/
+└── config.json    # Provider settings (API keys stored here)
+```
+
+## Documentation
+
+- [APPSHEET.md](./docs/APPSHEET.md) - AppSheet provider setup
+- [CLAUDE-CODE.md](./docs/CLAUDE-CODE.md) - Claude Code MCP configuration
+- [GEMINI-CLI.md](./docs/GEMINI-CLI.md) - Gemini CLI MCP configuration
+- [TOOLS.md](./docs/TOOLS.md) - MCP tools reference
 
 ## Future Enhancements
 
-### Image Attachments via Google Drive
-
-The AppSheet API supports referencing image files by path (e.g., `Attachment_Images/filename.jpg`). Testing confirmed that:
-
-1. Creating an attachment record with an image path successfully displays the image in AppSheet UI
-2. The `Image` column appears read-only via API, but `List Image` accepts paths
-3. Images must exist in AppSheet's storage folder
-
-**Proposed approach for full image support:**
-1. Use gwsa to upload image files to the Google Drive folder backing AppSheet storage
-2. Create attachment records via API referencing the uploaded filename
-3. For retrieval, read the path from attachment records and fetch via Google Drive API
-
-This would enable round-trip image attachment support without base64 encoding through the AppSheet API.
-
-### File Existence Validation
-
-When creating attachments via SDK/CLI/MCP with a filename reference, we should validate that the file exists in Google Drive before creating the attachment record. This prevents orphaned attachment records pointing to non-existent files.
-
-### Other Planned Features
-
 - Note read, update, and delete operations
-- Additional providers (Google Sheets, local JSON, GCS bucket)
-- Formal provider interface/abstract class with Pydantic data models
+- Image attachment upload/download via Google Drive
+- Additional providers (Google Sheets, local JSON)
+- Formal provider interface with Pydantic data models
+
+## License
+
+MIT
