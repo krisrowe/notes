@@ -15,7 +15,7 @@ This document outlines how to configure the Notes MCP Server for use with Gemini
 ## Quick Start
 
 ```bash
-gemini mcp add notes --command notes-mcp --scope user
+gemini mcp add notes notes-mcp --stdio --scope user
 ```
 
 This adds the Notes MCP server to your user scope so it's available everywhere.
@@ -37,7 +37,7 @@ Both read from:
 gemini mcp remove notes --scope user
 
 # Add the Notes MCP server
-gemini mcp add notes --command notes-mcp --scope user
+gemini mcp add notes notes-mcp --stdio --scope user
 ```
 
 **Note:** Use `--scope user` to make the server available from any directory. If omitted, the server is configured for project scope only.
@@ -115,7 +115,7 @@ gemini mcp remove notes --scope user
 
 # Update by removing and re-adding
 gemini mcp remove notes --scope user
-gemini mcp add notes --command notes-mcp --scope user
+gemini mcp add notes notes-mcp --stdio --scope user
 ```
 
 ## Troubleshooting
